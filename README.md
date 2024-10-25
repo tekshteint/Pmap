@@ -14,7 +14,7 @@ Pmap is a PowerShell-based, multithreaded alternative to Nmap, designed for netw
 
 ## Requirements
 
-- **PowerShell 7.0 or later**: The script requires at least PowerShell version 7.0, which is included in most recent Windows installations.
+- **PowerShell 5.0 or later**: The script requires at least PowerShell version 5.0, which is included in most recent Windows installations.
 - **No external dependencies**: The script operates independently, without the need for additional tools or modules.
 
 ## Installation
