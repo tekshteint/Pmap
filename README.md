@@ -1,4 +1,5 @@
 # Port Scanner
+![image]({https://img.shields.io/badge/powershell-5391FE?style=for-the-badge&logo=powershell&logoColor=white})
 
 Port Scanner is a PowerShell-based, multithreaded alternative to Nmap, designed for network port scanning without requiring elevated privileges. This tool is ideal for environments where Nmap is unavailable or restricted, but PowerShell is accessible.
 
