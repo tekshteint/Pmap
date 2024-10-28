@@ -204,7 +204,10 @@ if ((Test-Path -Path $PortListPath -PathType Leaf) -and (Get-Item $PortListPath)
 else {
     Write-Verbose -Message "Creating ports.txt and filling hash table..."
     Remove-Item -Path $PortListPath -ErrorAction SilentlyContinue
-    .\getWebPorts.ps1
+    $modulePath = Join-Path -Path $PSScriptRoot -ChildPath "getWebPorts.psm1"
+    if (-not (Get-Module -Name getWebPorts)) {
+        Import-Module -Name $modulePath
+    }
     $portsHashTable = populatePortsHash
 }
 
