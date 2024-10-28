@@ -117,12 +117,12 @@ function populatePortsHash {
 
 
 if (Test-Path -Path $PortListPath -PathType Leaf) {
-    Write-Verbose -Message "Read ports.txt and fill hash table..." -Verbose
+    Write-Verbose -Message "Read ports.txt and fill hash table..." 
     $portsHashTable = populatePortsHash
 }
 
 else {
-    Write-Verbose -Message "Creating ports.txt and filling hash table..." -Verbose
+    Write-Verbose -Message "Creating ports.txt and filling hash table..." 
     .\getWebPorts.ps1
     $portsHashTable = populatePortsHash
 }
