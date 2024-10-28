@@ -49,6 +49,14 @@ Scans ports 1024 to 2000 of the target
 Scans the selected ports of the target
 
 .EXAMPLE
+.\portScan.ps1 -targets 10.34.56.66 -discover
+Checks if the target is reachable
+
+.EXAMPLE
+.\portScan.ps1 -targets 192.168.1.1/24 -discover
+Checks what hosts in the subnet are reachable
+
+.EXAMPLE
 .\portsScan.ps1 -targets 10.34.56.66 -verbose *> test.txt
 Will include the output of each port scanned verbosely indiciating open or closed.
 Also redirects output to test.txt.
@@ -96,23 +104,15 @@ function Get-IpRange {
         [string] $subnet
     )
     
-    # Split IP and CIDR mask
     $ip, $cidr = $subnet -split '/'
     $maskBits = [int]$cidr
-
-    # Convert IP to an integer
     $ipBytes = [System.Net.IPAddress]::Parse($ip).GetAddressBytes()
     [Array]::Reverse($ipBytes)
     $ipInt = [BitConverter]::ToUInt32($ipBytes, 0)
-    
-    # Calculate subnet mask in integer format
     $maskInt = ([math]::Pow(2, $maskBits) - 1) -shl (32 - $maskBits)
-    
-    # Calculate start and end IPs
     $startIpInt = $ipInt -band $maskInt
     $endIpInt = $startIpInt -bor -bnot($maskInt)
-
-    # Generate IP range
+    
     for ($i = $startIpInt; $i -le $endIpInt; $i++) {
         $bytes = [BitConverter]::GetBytes($i)
         [Array]::Reverse($bytes)
@@ -127,34 +127,46 @@ if ($discover) {
         exit
     }
 
-    $reachableTargets = @()
+    $reachableTargets = [System.Collections.Concurrent.ConcurrentDictionary[string, bool]]::new()
     foreach ($target in $targets) {
         if ($target -match "/") {
             $ipRange = Get-IpRange -subnet $target
-            foreach ($ip in $ipRange) {
-                Write-Verbose -Message "Checking if $ip is reachable"
-                if (Test-Connection -ComputerName $ip -Count 1 -Quiet -TimeoutSeconds 1) {
-                    $reachableTargets += $ip
-                    Write-Verbose -Message "$ip is reachable"
+            
+            $ipRange | ForEach-Object -Parallel {
+                $ip = $_
+                $localResult = $using:reachableTargets
+                Write-Progress -Activity "Checking if $ip is reachable"
+                if (Test-Connection -ComputerName $ip -Count 2 -Quiet -TimeoutSeconds 1) {
+                    $localResult[$ip] = $True
+                } else {
+                    $localResult[$ip] = $False
+                    Write-Verbose -Message "$ip is not reachable" -Verbose
+                }
+            } -ThrottleLimit 15
+
+            
+            foreach ($ip in $reachableTargets.Keys) {
+                if ($reachableTargets[$ip] -eq $true) {
+                    Write-Host "$ip is reachable" -ForegroundColor Green
+                } else {
+                    Write-Verbose "$ip is not reachable"
                 }
             }
+
         } else {
-            if (Test-Connection -ComputerName $target -Count 1 -Quiet) {
-                $reachableTargets += $target
+            if (Test-Connection -ComputerName $target -Count 2.5 -Quiet) {
+                Write-Host "`n$target is reachable" -ForegroundColor Green
+                exit
+            } else {
+                Write-Host "`n$target is not reachable" -ForegroundColor Red
+                exit
             }
         }
     }
-    $targets = $reachableTargets
-    if ($targets.Count -eq 0) {
-        Write-Host "No reachable targets found. Exiting now." -ForegroundColor Red
-        exit
-    } else {
-        Write-Host "Reachable targets: $targets" -ForegroundColor Green
-        exit
-    }
+    exit
 }
 
-if (($quickScan.IsPresent -and ($pMin -ne 1 -or $pMax -ne 65535)) ) {
+if (($quickScan.IsPresent -and ($pMin -ne 1 -or $pMax -ne 65535)) -or ($quickScan.IsPresent -and $ports -ne "")) {
     Write-Host "Quick scan is mutually exclusive with selecting ports manually.`nExiting now." -ForegroundColor Red
     exit
 }
@@ -250,7 +262,7 @@ if ($quickScan) {
             
             }
 
-        }
+        } -ThrottleLimit 15
     }
 }
 
@@ -305,7 +317,7 @@ elseif ($ports -ne "") {
             
             }
 
-        }
+        } -ThrottleLimit 15
     }
 }
 
@@ -368,7 +380,7 @@ else {
             
             }
 
-        }
+        } -ThrottleLimit 15
     }
 }
 foreach ($r in $result){

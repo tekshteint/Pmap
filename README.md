@@ -40,5 +40,11 @@ git clone https://github.com/tekshteint/Pmap.git
 ### Scan specific ports on a single target
 `.\pmap.ps1 -targets 10.34.56.66 -ports 21,22,23,25,80,443,8080,8443`
 
-### Verbose output of each port’s status; redirect output to a text file
+### Verbose output of each port’s status; redirects output to a text file
 `.\pmap.ps1 -targets 10.34.56.66 -verbose *> output.txt`
+
+### Check if a target is alive
+`.\portScan.ps1 -targets 10.34.56.66 -discover`
+
+### Scan a range of IPs to see what is or isn't alive
+`.\portScan.ps1 -targets 192.168.1.1/24 -discover -verbose`
