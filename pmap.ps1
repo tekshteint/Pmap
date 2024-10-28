@@ -29,6 +29,9 @@ Target machines to scan. Can be multiple comma separated servers.
 .PARAMETER ports
 Comma separated ports to be scanned.
 
+.PARAMETER discover
+Checks if a host or subnet is alive and reachable
+
 .EXAMPLE
 .\portScan.ps1 -targets 10.34.56.66, 10.34.56.67
 Full port scan of both targets
@@ -64,7 +67,9 @@ param(
     [Parameter(mandatory = $true)]
     [string[]] $targets = "",
 
-    [string[]] $ports = ""
+    [string[]] $ports = "",
+
+    [switch] $discover
 )
 
 $banner =
@@ -86,7 +91,70 @@ if ($help) {
 Write-Host $banner
 Write-Information "   Debugging information`n-----------------------------`npMin: $pMin`npMax: $pMax`nquickScan: $($quickScan.IsPresent)`nTargets: $targets`nPorts: $ports`n-----------------------------`n"
 
-if (($quickScan.IsPresent -and ($pMin -ne 1 -or $pMax -ne 65535)) -or ($quickScan.IsPresent -and $ports -ne "")) {
+function Get-IpRange {
+    param (
+        [string] $subnet
+    )
+    
+    # Split IP and CIDR mask
+    $ip, $cidr = $subnet -split '/'
+    $maskBits = [int]$cidr
+
+    # Convert IP to an integer
+    $ipBytes = [System.Net.IPAddress]::Parse($ip).GetAddressBytes()
+    [Array]::Reverse($ipBytes)
+    $ipInt = [BitConverter]::ToUInt32($ipBytes, 0)
+    
+    # Calculate subnet mask in integer format
+    $maskInt = ([math]::Pow(2, $maskBits) - 1) -shl (32 - $maskBits)
+    
+    # Calculate start and end IPs
+    $startIpInt = $ipInt -band $maskInt
+    $endIpInt = $startIpInt -bor -bnot($maskInt)
+
+    # Generate IP range
+    for ($i = $startIpInt; $i -le $endIpInt; $i++) {
+        $bytes = [BitConverter]::GetBytes($i)
+        [Array]::Reverse($bytes)
+        [System.Net.IPAddress]::new($bytes).ToString()
+    }
+}
+
+
+if ($discover) {
+    if (-not $PSCmdlet.MyInvocation.BoundParameters.ContainsKey('targets')) {
+        Write-Host "When using -discover, the only other allowed flag is -target.`nExiting now." -ForegroundColor Red
+        exit
+    }
+
+    $reachableTargets = @()
+    foreach ($target in $targets) {
+        if ($target -match "/") {
+            $ipRange = Get-IpRange -subnet $target
+            foreach ($ip in $ipRange) {
+                Write-Verbose -Message "Checking if $ip is reachable"
+                if (Test-Connection -ComputerName $ip -Count 1 -Quiet -TimeoutSeconds 1) {
+                    $reachableTargets += $ip
+                    Write-Verbose -Message "$ip is reachable"
+                }
+            }
+        } else {
+            if (Test-Connection -ComputerName $target -Count 1 -Quiet) {
+                $reachableTargets += $target
+            }
+        }
+    }
+    $targets = $reachableTargets
+    if ($targets.Count -eq 0) {
+        Write-Host "No reachable targets found. Exiting now." -ForegroundColor Red
+        exit
+    } else {
+        Write-Host "Reachable targets: $targets" -ForegroundColor Green
+        exit
+    }
+}
+
+if (($quickScan.IsPresent -and ($pMin -ne 1 -or $pMax -ne 65535)) ) {
     Write-Host "Quick scan is mutually exclusive with selecting ports manually.`nExiting now." -ForegroundColor Red
     exit
 }
@@ -116,13 +184,14 @@ function populatePortsHash {
 }
 
 
-if (Test-Path -Path $PortListPath -PathType Leaf) {
-    Write-Verbose -Message "Read ports.txt and fill hash table..." 
+if ((Test-Path -Path $PortListPath -PathType Leaf) -and (Get-Item $PortListPath).CreationTime -gt (Get-Date).AddDays(-7)) {
+    Write-Verbose -Message "Read ports.txt and fill hash table..."
     $portsHashTable = populatePortsHash
 }
 
 else {
-    Write-Verbose -Message "Creating ports.txt and filling hash table..." 
+    Write-Verbose -Message "Creating ports.txt and filling hash table..."
+    Remove-Item -Path $PortListPath -ErrorAction SilentlyContinue
     .\getWebPorts.ps1
     $portsHashTable = populatePortsHash
 }
