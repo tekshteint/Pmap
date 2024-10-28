@@ -44,7 +44,7 @@ git clone https://github.com/tekshteint/Pmap.git
 `.\pmap.ps1 -targets 10.34.56.66 -verbose *> output.txt`
 
 ### Check if a target is alive
-`.\portScan.ps1 -targets 10.34.56.66 -discover`
+`.\pmap.ps1 -targets 10.34.56.66 -discover`
 
 ### Scan a range of IPs to see what is or isn't alive
-`.\portScan.ps1 -targets 192.168.1.1/24 -discover -verbose`
+`.\pmap.ps1 -targets 192.168.1.1/24 -discover -verbose`
