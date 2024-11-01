@@ -237,6 +237,7 @@ if ($quickScan) {
 
             else {
                 $value = "Open"
+                Write-Verbose -Message "$Target 'port' $port Open'" -Verbose
 
                 if ($portsHashTable.ContainsKey($portInt)) {
 
@@ -261,7 +262,9 @@ if ($quickScan) {
 
                 $r | Add-Member -MemberType NoteProperty -name Descrption -value $Service[1]
 
-                $localResult[$portInt] = $r
+                $key = $Target + ":" + $port
+
+                $localResult[$key] = $r
             
             }
 
@@ -293,6 +296,7 @@ elseif ($ports -ne "") {
 
             else {
                 $value = "Open"
+                Write-Verbose -Message "$Target 'port' $port Open'" -Verbose
 
                 if ($portsHashTable.ContainsKey($portInt)) {
 
@@ -300,7 +304,6 @@ elseif ($ports -ne "") {
                 
                 }
                 else {
-
                     $Service = @("Unknown", "Unknown")
                 }
 
@@ -316,7 +319,9 @@ elseif ($ports -ne "") {
 
                 $r | Add-Member -MemberType NoteProperty -name Descrption -value $Service[1]
 
-                $localResult[$portInt] = $r
+                $key = $Target + ":" + $port
+
+                $localResult[$key] = $r
             
             }
 
@@ -347,7 +352,7 @@ else {
 
             $connect = $obj.BeginConnect($Target, $port, $null, $null)
 
-            $Wait = $connect.AsyncWaitHandle.WaitOne(30, $false)
+            $Wait = $connect.AsyncWaitHandle.WaitOne(100, $false)
 
             if (-not $Wait) {
                 Write-Verbose -Message "$Target 'port' $port 'Closed - Timeout'" -Verbose
@@ -356,7 +361,8 @@ else {
             else {
 
                 $value = "Open"
-
+                Write-Verbose -Message "$Target 'port' $port Open'" -Verbose
+                
                 if ($portsHashTable.ContainsKey($portInt)) {
                     $Service = $portsHashTable[$portInt].Split('|')
                 }
@@ -379,7 +385,9 @@ else {
 
                 $r | Add-Member -MemberType NoteProperty -name Descrption -value $Service[1]
 
-                $localResult[$portInt] = $r
+                $key = $Target + ":" + $port
+
+                $localResult[$key] = $r
             
             }
 
