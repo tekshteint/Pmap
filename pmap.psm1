@@ -34,3 +34,19 @@ function Get-WebPorts {
     Out-File -InputObject $output -FilePath "$PSScriptRoot\ports.txt"
     Write-Verbose -message "File created at $PSScriptRoot\ports.txt" 
 }
+
+function get-Version {
+    $localModulePath = "$PSScriptRoot\pmap.psd1"
+    $remoteModuleUrl = "https://raw.githubusercontent.com/tekshteint/Pmap/main/pmap.psd1"
+
+    $localModule = Import-PowerShellDataFile -Path $localModulePath
+    $localVersion = [version]$localModule.ModuleVersion
+
+    $remoteModuleContent = Invoke-WebRequest -Uri $remoteModuleUrl -UseBasicParsing
+    $remoteModule = Invoke-Expression $remoteModuleContent.Content
+    $remoteVersion = [version]$remoteModule.ModuleVersion
+
+    if ($localVersion -lt $remoteVersion) {
+        Write-Host "A new version ($remoteVersion) is available. Please update your module." -ForegroundColor Yellow
+    }         
+}
