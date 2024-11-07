@@ -212,6 +212,7 @@ else {
         $commandList = Get-Command -Module getWebPorts
         Write-Information -Message "Command list: $commandList`n"
         Get-WebPorts
+        Get-Version
     }
     
     $portsHashTable = populatePortsHash
