@@ -46,7 +46,7 @@ function get-Version {
     $remoteModule = Invoke-Expression $remoteModuleContent.Content
     $remoteVersion = [version]$remoteModule.ModuleVersion
 
-    if ($localVersion -lt $remoteVersion) {
+    if ($localVersion.Major -lt $remoteVersion.Major) {
         Write-Host "A new version ($remoteVersion) is available. Please update your module." -ForegroundColor Yellow
     }         
 }

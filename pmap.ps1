@@ -206,14 +206,14 @@ else {
     Remove-Item -Path $PortListPath -ErrorAction SilentlyContinue
     $modulePath = Join-Path -Path $PSScriptRoot -ChildPath "pmap.psm1"
     Write-Information -Message "`nmodulePath: $modulePath" 
-    if (Get-Module -Name getWebPorts) {
-        Import-Module -Name $modulePath -Force -Global
-        Write-Information -Message "Module imported`n"
-        $commandList = Get-Command -Module getWebPorts
-        Write-Information -Message "Command list: $commandList`n"
-        Get-WebPorts
-        Get-Version
-    }
+
+    Import-Module -Name $modulePath -Force -Global
+    Write-Information -Message "Module imported`n"
+    $commandList = Get-Command -Module pmap
+    Write-Information -Message "Command list: $commandList`n"
+    Get-WebPorts
+    Get-Version
+    
     
     $portsHashTable = populatePortsHash
 }
