@@ -163,6 +163,14 @@ if ($discover) {
             }
         }
     }
+    if ($VerbosePreference) {
+        Write-Host "VERBOSE: " -NoNewline -ForegroundColor Yellow
+        foreach ($ip in $reachableTargets.Keys) {
+            if ($reachableTargets[$ip] -eq $true) {
+                Write-Host "$ip," -NoNewline -ForegroundColor Yellow
+            }
+    }
+}
     exit
 }
 
