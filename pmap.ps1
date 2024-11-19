@@ -238,7 +238,7 @@ if ($quickScan) {
             $portInt = [Int] $port
             $localResult = $using:result
 
-            Write-Progress -Activity "Scanning port $port"
+            Write-Progress -Activity "Scanning ${Target}:$port"
 
             $obj = new-object System.Net.Sockets.TcpClient
 
@@ -296,6 +296,8 @@ elseif ($ports -ne "") {
             $portsHashTable = $using:portsHashTable
             $portInt = [Int] $port
             $localResult = $using:result
+
+            Write-Progress -Activity "Scanning port ${Target}:$port"
 
             $obj = new-object System.Net.Sockets.TcpClient
 
@@ -361,7 +363,7 @@ else {
             $range = $pMax - $pMin
             $curr = $_ - $pMax + $range
             $completed = ($curr / $range) * 100
-            Write-Progress -Activity "Scanning port $port" -Status "$([math]::Round($completed, 2))% complete" -PercentComplete $completed
+            Write-Progress -Activity "Scanning ${Target}:$port" -Status "$([math]::Round($completed, 2))% complete" -PercentComplete $completed
 
             $obj = new-object System.Net.Sockets.TcpClient
 
