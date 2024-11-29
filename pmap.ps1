@@ -204,7 +204,7 @@ function populatePortsHash {
 }
 
 
-if ((Test-Path -Path $PortListPath -PathType Leaf) -and (Get-Item $PortListPath).CreationTime -gt (Get-Date).AddDays(-7)) {
+if ((Test-Path -Path $PortListPath -PathType Leaf -ErrorAction SilentlyContinue) -or ((Get-Item $PortListPath -ErrorAction SilentlyContinue).CreationTime -gt (Get-Date).AddDays(-7))) {
     Write-Verbose -Message "Read ports.txt and fill hash table..."
     $portsHashTable = populatePortsHash
 }
